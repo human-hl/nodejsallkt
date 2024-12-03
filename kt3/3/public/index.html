@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        #messages { border: 1px solid #60caf4; padding: 10px; height: 300px; overflow-y: scroll; }
+        #messages div { margin-bottom: 10px; }
+        #input { width: 80%; }
+        #send { width: 18%; }
+    </style>
+</head>
+<body>
+    <div id="messages"></div>
+    <input id="input" type="text" placeholder="Введите сообщение...">
+    <button id="send">Отправить</button>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+        const messages = document.getElementById('messages');
+        const input = document.getElementById('input');
+        const send = document.getElementById('send');
+
+        // Запрашиваем имя и цвет пользователя
+        const userName = prompt('Введите ваше имя:');
+        const userColor = prompt('Введите предпочитаемый цвет (например, red):');
+        
+        // Отправляем информацию о пользователе на сервер
+        socket.emit('set name', { name: userName, color: userColor });
+
+        // Функция для добавления сообщения в чат
+        function appendMessage(data) {
+            const messageDiv = document.createElement('div');
+            if (typeof data === 'string') {
+                // Простое текстовое сообщение
+                messageDiv.textContent = data;
+            } else {
+                // Сообщение от пользователя
+                messageDiv.textContent = `${data.user}: ${data.text}`;
+                messageDiv.style.color = data.color;
+            }
+            messages.appendChild(messageDiv);
+            messages.scrollTop = messages.scrollHeight; // Скроллим вниз
+        }
+
+        // Слушаем сообщения от сервера
+        socket.on('chat message', (data) => {
+            appendMessage(data);
+        });
+
+        // Отправка сообщения при клике на кнопку
+        send.addEventListener('click', () => {
+            const message = input.value.trim();
+            if (message) {
+                socket.emit('chat message', message); // Отправляем на сервер
+                input.value = ''; // Очищаем поле ввода
+            }
+        });
+
+        // Отправка сообщения при нажатии Enter
+        input.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                send.click();
+            }
+        });
+    </script>
+</body>
+</html>

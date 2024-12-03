@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        #messages { border: 1px solid #e84ed3; padding: 10px; height: 300px; overflow-y: scroll; }
+        #messages div { margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+    <div id="messages"></div>
+    <input id="input" type="text" placeholder="Введите сообщение...">
+    <button id="send">Отправить</button>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+        const messages = document.getElementById('messages');
+        const input = document.getElementById('input');
+        const send = document.getElementById('send');
+        const userName = prompt('Введите ваше имя:');
+        socket.emit('set name', userName);
+
+        // Добавление сообщения в чат
+        function appendMessage(message) {
+            const messageDiv = document.createElement('div');
+            messageDiv.textContent = message;
+            messages.appendChild(messageDiv);
+            messages.scrollTop = messages.scrollHeight;
+        }
+
+        // При получении сообщения от сервера
+        socket.on('chat message', (msg) => {
+            appendMessage(msg);
+        });
+
+        // Отправка сообщения
+        send.addEventListener('click', () => {
+            const message = input.value;
+            if (message) {
+                socket.emit('chat message', message);
+                input.value = '';
+            }
+        });
+
+        input.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                send.click();
+            }
+        });
+    </script>
+</body>
+</html>
